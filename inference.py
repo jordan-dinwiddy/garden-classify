@@ -8,7 +8,7 @@ def log(message):
 
 # Parameters
 img_size = (256, 256)
-model_save_path = "garden_classifier_model.h5"
+model_save_path = "models/garden_classifier_model.h5"
 
 # Ensure the model exists
 if not os.path.exists(model_save_path):
