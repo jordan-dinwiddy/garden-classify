@@ -5,6 +5,9 @@ import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.metrics import BinaryAccuracy
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras import models, layers, optimizers
+
 
 # Paths
 LABELS_FILE = "dataset/labels.csv"
@@ -33,7 +36,7 @@ def load_labels(labels_file):
     df["Target"] = df["Labels"].apply(labels_to_vector)
     return df
 
-def preprocess_image(image_path, target_size=(256, 256)):
+def preprocess_image(image_path, target_size=(128, 128)):
     image = tf.io.read_file(image_path)
     image = tf.image.decode_jpeg(image, channels=3)
     image = tf.image.resize(image, target_size)  # Resize to model input size
@@ -43,17 +46,6 @@ def preprocess_image(image_path, target_size=(256, 256)):
 # Log function for consistency
 def log(message):
     print(f"[TRAINING] {message}")
-
-# Convert the model to TFLite format
-def save_model_as_tflite(model, tflite_model_path):
-    # Convert to TFLite format
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    tflite_model = converter.convert()
-
-    # Save the TFLite model to a file
-    with open(tflite_model_path, "wb") as f:
-        f.write(tflite_model)
-    print(f"TFLite model saved to {tflite_model_path}")
 
 # Combine original and augmented data
 def combine_data(df, original_dir, augmented_dir):
@@ -91,9 +83,7 @@ def create_dataset(df):
 
 
 # Parameters
-model_save_path = "models/img_model.l.h5"
-tflite_save_path = "models/img_model.tflite"
-
+model_save_path = "models/img_model-transfer.a.h5"
 
 # Load the labels
 df_labels = load_labels(LABELS_FILE)
@@ -106,36 +96,55 @@ train_df, val_df = train_test_split(combined_df, test_size=0.2, random_state=42,
 train_dataset = create_dataset(train_df).shuffle(1000).batch(32)
 val_dataset = create_dataset(val_df).batch(32)
 
+
+# Load the pretrained MobileNetV2 model
+base_model = MobileNetV2(input_shape=(128, 128, 3), include_top=False, weights="imagenet")
+base_model.trainable = False  # Freeze the base model initially
+
+
 # Build the model
 log("Building the model...")
+
+# Build the model
 model = models.Sequential([
-    layers.Input(shape=(256, 256, 3)),
-    layers.Conv2D(32, (3, 3), activation='relu'),
-    layers.MaxPooling2D((2, 2)),
-    layers.Conv2D(64, (3, 3), activation='relu'),
-    layers.MaxPooling2D((2, 2)),
-    layers.Conv2D(128, (3, 3), activation='relu'),
-    layers.Flatten(),
-    layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
-    layers.Dropout(0.5),
-    layers.Dense(len(LABELS), activation='sigmoid')  # Sigmoid for multi-label classification
+    base_model,
+    layers.GlobalAveragePooling2D(),  # Convert feature maps to a single vector
+    layers.Dense(256, activation="relu"),  # Fully connected layer
+    layers.Dropout(0.5),  # Regularization
+    layers.Dense(len(LABELS), activation="sigmoid")  # Multi-label classification output
 ])
 
 # Compile the model
 log("Compiling the model...")
-model.compile(optimizer='adam',
-              loss='binary_crossentropy',  # Binary cross-entropy for multi-label
-              metrics=[BinaryAccuracy(threshold=0.5)]  # Set custom threshold, same as 'accuracy' if 0.5 is used
-              #metrics=['accuracy']
-              )
+model.compile(
+    optimizer=optimizers.Adam(learning_rate=1e-4),
+    loss="binary_crossentropy",
+    metrics=["accuracy"]
+)
 
-# Train the model
+# Train the top layers
 log("Starting training...")
 model.fit(
     train_dataset,
     validation_data=val_dataset,
-    epochs=20,  # You can increase epochs for larger datasets
-    callbacks=[tf.keras.callbacks.EarlyStopping(patience=5, restore_best_weights=True)]
+    epochs=10,
+    callbacks=[tf.keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)]
+)
+
+# Fine-tune by unfreezing some layers
+log("Fine-tine training...")
+base_model.trainable = True
+model.compile(
+    optimizer=optimizers.Adam(learning_rate=1e-5),  # Lower learning rate for fine-tuning
+    loss="binary_crossentropy",
+    metrics=["accuracy"]
+)
+
+model.fit(
+    train_dataset,
+    validation_data=val_dataset,
+    epochs=10,
+    callbacks=[tf.keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)]
 )
 
 # Save the model
