@@ -9,7 +9,7 @@ import time
 LABELS = ["starbucks", "person", "dog"]
 
 # Load the trained model
-MODEL_PATH = "models/img_model-transfer.a.h5"
+MODEL_PATH = "models/img_model-transfer.d.keras"
 model = tf.keras.models.load_model(MODEL_PATH)
 print(f"Model loaded from {MODEL_PATH}")
 

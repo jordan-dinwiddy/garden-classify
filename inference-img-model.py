@@ -1,12 +1,13 @@
 import tensorflow as tf
 import numpy as np
+import argparse
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 
 # Define the labels (same order as during training)
 LABELS = ["starbucks", "person", "dog"]
 
 # Load the trained model
-MODEL_PATH = "models/img_model.h5"
+MODEL_PATH = "models/img_model-transfer.c.h5"
 model = tf.keras.models.load_model(MODEL_PATH)
 print(f"Model loaded from {MODEL_PATH}")
 
@@ -24,9 +25,21 @@ def predict_image(image_path):
     results = {LABELS[i]: predictions[i] for i in range(len(LABELS))}  # Map predictions to labels
     return results
 
-# Example usage
+# Main function to parse arguments and run prediction
 if __name__ == "__main__":
-    IMAGE_PATH = "dataset/images/image_43.jpg"  # Replace with your image path
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description="Image classification using a trained TensorFlow model.")
+    parser.add_argument(
+        "image_path", 
+        type=str, 
+        help="Path to the image to be classified."
+    )
+    
+    # Parse arguments
+    args = parser.parse_args()
+    IMAGE_PATH = args.image_path
+
+    # Perform prediction
     predictions = predict_image(IMAGE_PATH)
     print(f"Predictions for {IMAGE_PATH}:")
     for label, probability in predictions.items():
