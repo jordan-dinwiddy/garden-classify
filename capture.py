@@ -8,7 +8,7 @@ IMAGE_DIR = "dataset/images"
 LABEL_FILE = "dataset/labels.csv"
 
 # Available labels
-LABELS = ["starbucks", "person", "dog", "none"]
+LABELS = ["starbucks", "person", "dog", "shieldgps", "none"]
 
 # Initial window size
 WINDOW_WIDTH = 320

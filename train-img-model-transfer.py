@@ -15,7 +15,7 @@ LABELS_FILE = "dataset/labels.csv"
 ORIGINAL_DIR = "dataset/images"
 AUGMENTED_DIR = "dataset/augmented_images"
 
-LABELS = ["starbucks", "person", "dog"]
+LABELS = ["starbucks", "person", "dog", "shieldgps"]
 
 AUGMENTATIONS_PER_IMAGE = 10
 
@@ -90,7 +90,7 @@ def create_dataset(df):
 
 
 # Parameters
-model_save_path = "models/img_model-transfer.d.keras"
+model_save_path = "models/img_model-transfer.e.keras"
 
 # Load the labels
 df_labels = load_labels(LABELS_FILE)

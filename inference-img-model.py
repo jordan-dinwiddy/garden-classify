@@ -4,7 +4,7 @@ import argparse
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 
 # Define the labels (same order as during training)
-LABELS = ["starbucks", "person", "dog"]
+LABELS = ["starbucks", "person", "dog", "shieldgps"]
 
 # Load the trained model
 MODEL_PATH = "models/img_model-transfer.c.h5"

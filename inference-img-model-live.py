@@ -6,10 +6,10 @@ import time
 
 
 # Define the labels (same order as during training)
-LABELS = ["starbucks", "person", "dog"]
+LABELS = ["starbucks", "person", "dog", "shieldgps"]
 
 # Load the trained model
-MODEL_PATH = "models/img_model-transfer.d.keras"
+MODEL_PATH = "models/img_model-transfer.e.keras"
 model = tf.keras.models.load_model(MODEL_PATH)
 print(f"Model loaded from {MODEL_PATH}")
 
