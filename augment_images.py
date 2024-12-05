@@ -10,13 +10,14 @@ OUTPUT_DIR = "dataset/augmented_images"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Number of augmentations per image
-AUGMENTATIONS_PER_IMAGE = 20
+AUGMENTATIONS_PER_IMAGE = 10
 
 # Define data augmentation pipeline
 data_augmentation = tf.keras.Sequential([
     tf.keras.layers.RandomFlip("horizontal_and_vertical"),  # Randomly flip images
-    tf.keras.layers.RandomRotation(0.2),  # Rotate by ±20%
+    tf.keras.layers.RandomRotation(0.1),  # Rotate by ±20%
     tf.keras.layers.RandomZoom(0.1),      # Zoom in/out by 10%
+    tf.keras.layers.RandomBrightness(0.2),  # Adjust brightness by ±20%
     tf.keras.layers.RandomContrast(0.2)  # Adjust contrast by ±20%
 ])
 

@@ -4,6 +4,7 @@ import numpy as np
 import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.metrics import BinaryAccuracy
 
 # Paths
 LABELS_FILE = "dataset/labels.csv"
@@ -11,6 +12,8 @@ ORIGINAL_DIR = "dataset/images"
 AUGMENTED_DIR = "dataset/augmented_images"
 
 LABELS = ["starbucks", "person", "dog"]
+
+AUGMENTATIONS_PER_IMAGE = 10
 
 # Load and process labels.csv, return essentially a map of images name -> label + target vector
 def load_labels(labels_file):
@@ -63,7 +66,7 @@ def combine_data(df, original_dir, augmented_dir):
     augmented_targets = []
     for img, target in zip(df["Image Name"], original_targets):
         base_name, ext = os.path.splitext(img)
-        aug_files = [f"{base_name}_aug_{i+1}{ext}" for i in range(20)]  # Assuming 20 augmentations
+        aug_files = [f"{base_name}_aug_{i+1}{ext}" for i in range(AUGMENTATIONS_PER_IMAGE)]  # Assuming n augmentations
         for aug_file in aug_files:
             augmented_paths.append(os.path.join(augmented_dir, aug_file))
             augmented_targets.append(target)
@@ -88,7 +91,7 @@ def create_dataset(df):
 
 
 # Parameters
-model_save_path = "models/img_model.h5"
+model_save_path = "models/img_model.i.h5"
 tflite_save_path = "models/img_model.tflite"
 
 
@@ -113,7 +116,8 @@ model = models.Sequential([
     layers.MaxPooling2D((2, 2)),
     layers.Conv2D(128, (3, 3), activation='relu'),
     layers.Flatten(),
-    layers.Dense(128, activation='relu'),
+    layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01)),
+    layers.Dropout(0.5),
     layers.Dense(len(LABELS), activation='sigmoid')  # Sigmoid for multi-label classification
 ])
 
@@ -121,7 +125,9 @@ model = models.Sequential([
 log("Compiling the model...")
 model.compile(optimizer='adam',
               loss='binary_crossentropy',  # Binary cross-entropy for multi-label
-              metrics=['accuracy'])
+              metrics=[BinaryAccuracy(threshold=0.5)]  # Set custom threshold, same as 'accuracy' if 0.5 is used
+              #metrics=['accuracy']
+              )
 
 # Train the model
 log("Starting training...")
