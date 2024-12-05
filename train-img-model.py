@@ -91,7 +91,7 @@ def create_dataset(df):
 
 
 # Parameters
-model_save_path = "models/img_model.i.h5"
+model_save_path = "models/img_model.k.h5"
 tflite_save_path = "models/img_model.tflite"
 
 
